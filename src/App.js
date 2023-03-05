@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 
 import MoviesList from "./components/MoviesList";
 import "./App.css";
@@ -8,22 +8,13 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [intervalId, setIntervalId] = useState(null);
+  const [addInterval, setAddInterval] = useState(false);
 
-  useEffect(() => {
-    // if (intervalId) {
-    //   const interval = setInterval(fetchMoviesHandler, 5000);
-    //   setIntervalId(interval);
-    // }
-    // return () => {
-    //   clearInterval(intervalId);
-    // };
-  }, [intervalId]);
-
-  async function fetchMoviesHandler() {
+  const fetchMoviesHandler = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch("https://swapi.dev/api/film/");
+      const response = await fetch("https://swapi.dev/api/films/");
       if (!response.ok) {
         throw new Error("Something went wrong...Retrying!");
       }
@@ -41,17 +32,28 @@ function App() {
       setMovies(transformedMovies);
     } catch (error) {
       setError(error.message);
-      if (!intervalId) {
-        console.log("timer running");
-        clearInterval(intervalId);
-        const interval = setInterval(fetchMoviesHandler, 5000);
-        setIntervalId((p) => interval);
-        console.log(interval);
-      }
-      // localStorage.setItem('intervalId', interval);
+      setAddInterval(true);
     }
     setIsLoading(false);
+  }, []);
+
+  function cancelInterval() {
+    clearInterval(intervalId);
+    setIntervalId(null);
+    setError("Retrying cancelled!");
+    setAddInterval(false);
   }
+
+  useEffect(() => {
+    if (addInterval) {
+      const interval = setInterval(fetchMoviesHandler, 5000);
+      setIntervalId(interval);
+    }
+  }, [addInterval, fetchMoviesHandler]);
+
+  useEffect(() => {
+    fetchMoviesHandler();
+  }, [fetchMoviesHandler]);
 
   let content = <p>Found no movies.</p>;
 
@@ -71,16 +73,7 @@ function App() {
     <React.Fragment>
       <section>
         <button onClick={fetchMoviesHandler}>Fetch Movies</button>
-        <button
-          onClick={() => {
-            console.log("clicked cancel");
-            clearInterval(intervalId);
-            setIntervalId("cancelled");
-            setError("Retrying cancelled!");
-          }}
-        >
-          Cancel Retrying
-        </button>
+        {error && <button onClick={cancelInterval}>Cancel Retrying</button>}
       </section>
       <section>{content}</section>
     </React.Fragment>
