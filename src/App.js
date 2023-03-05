@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 
 import MoviesList from "./components/MoviesList";
+import AddMovie from "./components/AddMovie";
+
 import "./App.css";
 
 function App() {
@@ -55,6 +57,10 @@ function App() {
     fetchMoviesHandler();
   }, [fetchMoviesHandler]);
 
+  function addMovieHandler(movie) {
+    console.log(movie);
+  }
+
   let content = <p>Found no movies.</p>;
 
   if (movies.length > 0) {
@@ -70,13 +76,16 @@ function App() {
   }
 
   return (
-    <React.Fragment>
+    <>
+      <section>
+        <AddMovie onAddMovie={addMovieHandler} />
+      </section>
       <section>
         <button onClick={fetchMoviesHandler}>Fetch Movies</button>
         {error && <button onClick={cancelInterval}>Cancel Retrying</button>}
       </section>
       <section>{content}</section>
-    </React.Fragment>
+    </>
   );
 }
 
